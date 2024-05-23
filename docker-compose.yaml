@@ -1,0 +1,47 @@
+version: '3.9' # version of docker compose file format
+
+services: # services that we will be using in the application 
+  mysql: # section sets up MySQL database
+    image: mysql:5.7 # docker image to use
+    container_name: mysql # name of the created container
+    command: --explicit_defaults_for_timestamp=1
+    environment: # env variables to configure MySQL instance
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} # root password for mysql
+      - MYSQL_DATABASE=${MYSQL_DATABASE} # default database to create
+      - MYSQL_USER=${MYSQL_USER} # user for new database
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD} # password for new user
+    ports:
+      - "3307:3306" # Maps the container's port 3306 to the host's port 3306.
+    volumes: # Persists data by mounting the host directory as a volume inside the container.
+      - mysql_data:/var/lib/mysql
+
+  airflow: # Sets up Apache airflow
+    image: apache/airflow:2.5.0 # docker image to use
+    container_name: airflow # name of the container
+    depends_on: # specifies that ariflow servive depends on mysql service, that is create this container once we have mysql running
+      - mysql
+    environment: # env variables for configuring airflow 
+      - AIRFLOW__CORE__EXECUTOR=$AIRFLOW__CORE__EXECUTOR # sets the executor type
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=${AIRFLOW__CORE__SQL_ALCHEMY_CONN} # connection string for MySQL database
+      - AIRFLOW__CORE__LOAD_EXAMPLES=${AIRFLOW__CORE__LOAD_EXAMPLES} # Whether to load examples DAGs
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=${AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION} # Newly created DAGs are not immidiately executed 
+      - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=${AIRFLOW__WEBSERVER__EXPOSE_CONFIG} # whether the Airflow web server's configuration is exposed via the UI
+      - AIRFLOW__LOGGING__LOGGING_LEVEL=${AIRFLOW__LOGGING__LOGGING_LEVEL} # information messages will be logged
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AIRFLOW_CONN_MYSQL_CONN=AIRFLOW__CORE__SQL_ALCHEMY_CONN
+      - AIRFLOW_CONN_AWS_DEFAULT=aws://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@/
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
+      - S3_KEY=${S3_KEY}
+    volumes: # Mounts host directories for DAGs, logs, and plugins.
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./airflow.cfg:/opt/airflow/airflow.cfg
+      - ./entrypoint.sh:/entrypoint.sh  # Mount the entrypoint script
+    ports: # Maps the container's port 8080 to the host's port 8080.
+      - "8080:8080"
+    entrypoint: /entrypoint.sh  # Use the custom entrypoint script
+
+volumes:
+  mysql_data:
