@@ -40,5 +40,40 @@ We utilize the connect() function to establish a connection between database and
 
 Once the connection is established we can execute the SQL commands and interact with the database. 
 
-# TODOs
-1. Even though we have created environment variables in the `docker-compose` file, the Airflow is not able to create the metadata to store the details properly. We face issues using the `conn_id` as the table does not contain any information. Therefore, we resorted to manually loading the environment variables and passing them as arguments. 
+# Issue with the Connections
+Even though we have created environment variables in the `docker-compose` file, the Airflow is not able to create the metadata to store the details properly. We face issues using the `conn_id` as the table does not contain any information. Therefore, we resorted to manually loading the environment variables and passing them as arguments. 
+
+Naming convention is `AIRFLOW_CONN_{CONN_ID}`, where `CONN_ID` is all uppercase. For example, if the connection id is `my_prod_db`, then the variable name should be `AIRFLOW_CONN_MY_PROD_DB`. 
+
+## Method 1 - JSON format in entrypoint.sh
+```
+export AIRFLOW_CONN_MYSQL_DEFAULT = '{
+    "conn_type": "mysql",
+    "login": "airflow",
+    "password": "airflowpassword",
+    "host": "mysql",
+    "schema": "airflow"
+}'
+```
+
+## Method 2 - Generating a JSON connection representation
+To make this JSON generation easier, there is a function in the `Connection` class - `as_json()`. 
+
+```
+from airflow.models.connection import Conneciton
+c = Connection(
+    conn_id = "mysql_default",
+    conn_type = "mysql",
+    host = "mysql",
+    login = "airflow",
+    password = "airflowpassword"
+    extra = {"extra_param": "this_value"}
+)
+print(f"AIRFLOW_CONN_{c.conn_id.upper()} = '{c.as_json()}'")
+```
+
+## Method 3 - URI format
+```
+export AIRFLOW_CONN_MY_PROD_DATABASE='my-conn-type://login:password@host:port/schema?param1=val1&param2=val2'
+```
+For AWS usually, we only require conn-type, login, and password as arguments. 

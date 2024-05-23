@@ -27,10 +27,11 @@ services: # services that we will be using in the application
       - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=${AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION} # Newly created DAGs are not immidiately executed 
       - AIRFLOW__WEBSERVER__EXPOSE_CONFIG=${AIRFLOW__WEBSERVER__EXPOSE_CONFIG} # whether the Airflow web server's configuration is exposed via the UI
       - AIRFLOW__LOGGING__LOGGING_LEVEL=${AIRFLOW__LOGGING__LOGGING_LEVEL} # information messages will be logged
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
-      - AIRFLOW_CONN_MYSQL_CONN=AIRFLOW__CORE__SQL_ALCHEMY_CONN
-      - AIRFLOW_CONN_AWS_DEFAULT=aws://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@/
+      - AIRFLOW_CONN_AWS_DEFAULT=aws://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY}@/?region_name=us-east-1
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
       - S3_KEY=${S3_KEY}
     volumes: # Mounts host directories for DAGs, logs, and plugins.

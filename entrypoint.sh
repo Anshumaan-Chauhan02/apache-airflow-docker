@@ -1,8 +1,14 @@
 #!/bin/bash
 
-# Set MySQL credentials
-export MYSQL_USER=airflow
-export MYSQL_PASSWORD=airflowpassword
+# Exporting some env variables
+export AIRFLOW_CONN_MYSQL_DEFAULT='{
+  "conn_type": "mysql",
+  "host": "mysql",
+  "login": "'"$MYSQL_USER"'",
+  "password": "'"$MYSQL_PASSWORD"'",
+  "port": 3306,
+  "schema": "airflow"
+}'
 
 # Function to check if MySQL is ready
 function wait_for_mysql() {

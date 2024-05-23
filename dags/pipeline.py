@@ -7,14 +7,11 @@ import pymysql
 import pandas as pd
 import json
 import urllib3
-from dotenv import load_dotenv
 import os
 
-# Load environment variables from .env file
-load_dotenv()
 
-ACCESS_KEY = os.getenv('AWS_ACCESS_KEY_ID')
-SECRET_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+# ACCESS_KEY = os.getenv('AWS_ACCESS_KEY_ID')
+# SECRET_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
 
 # Get S3 bucket details from environment variables
 BUCKET_NAME = os.getenv('S3_BUCKET_NAME')
@@ -26,15 +23,23 @@ def fetch_and_store_data():
     # Connection is a placeholder to store information about different database instances connection information.
     
     # conn_id can be found in the connection table inside the airflow database in MySQL
-    # connection = BaseHook.get_connection('mysql_default') 
-    
     # Establishing a connection to MySQL database
+
+    connection = BaseHook.get_connection('mysql_default') 
+    
     conn = pymysql.connect(
-        host="mysql",
-        user="airflow",
-        password="airflowpassword",
-        database="airflow"
+        host=connection.host,
+        user=connection.login,
+        password=connection.password,
+        database=connection.schema
     )
+    
+    # conn = pymysql.connect(
+    #     host="mysql",
+    #     user="airflow",
+    #     password="airflowpassword",
+    #     database="airflow"
+    # )
 
     # Creates a cursor to execute queries with
     cursor = conn.cursor()
@@ -66,14 +71,22 @@ def fetch_and_store_data():
 def transfer_data_to_s3():
     
     # Establishing connection with MySQL database
-    # connection = BaseHook.get_connection('mysql_default')
 
+    connection = BaseHook.get_connection('mysql_default') 
+    
     conn = pymysql.connect(
-        host="mysql",
-        user="airflow",
-        password="airflowpassword",
-        database="airflow"
+        host=connection.host,
+        user=connection.login,
+        password=connection.password,
+        database=connection.schema
     )
+
+    # conn = pymysql.connect(
+    #     host="mysql",
+    #     user="airflow",
+    #     password="airflowpassword",
+    #     database="airflow"
+    # )
     
     # Reading data from the MySQL table
     df = pd.read_sql("SELECT * FROM iss;", conn)
